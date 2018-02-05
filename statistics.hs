@@ -21,7 +21,7 @@ countLetters (x:xs) = (sum [1|c<-(x:xs),c==x],x)
 Deluppgift 2
 -}
 maketree :: [(Integer, Char)] -> Htree
-maketree x = createHtree((createWtree)$(sortWtree)$(makeWtree x))  
+maketree x = (createHtree)$(createWtree)$(sortWtree)$(makeWtree x)  
 
 createHtree :: Wtree -> Htree
 createHtree (L i1 w1)  = (Leaf w1)
@@ -60,15 +60,16 @@ addWtree ((B i0 a b):(B i3 a2 b2):xs)= sortBy (increasing')
 
 
 
-encode :: String -> (Htree , [Integer])
-encode [] = []
-encode (x:xs) =(maketree(statistics (x:xs)),[1..10]) 
+encode :: String -> Htree -> [Integer]
+encode [] _= (reverse [])
+encode (x:xs) htree =(traverseDF') htree x [] ++ encode xs htree
 
 traverseDF' :: Htree -> Char-> [Integer] -> [Integer]
 traverseDF' (Leaf c1) c output  = if c1==c then output else []
-traverseDF' (Branch l r) c output = (traverseDF' l c (0:output)) ++ (traverseDF' r c (1:output))
+traverseDF' (Branch l r) c output = (traverseDF' l c (1:output)) 
+                ++ (traverseDF' r c (0:output))
 {-
-let x = statistics "hejsan"
+let x = statistics "huffman"
 let y = makeWtree x
 let z = sortWtree y
 let w = createWtree z
@@ -77,5 +78,6 @@ createHtree w
 2:
 let x = statistics "text"
 let y =maketree x
+encode "text" y
 traverseDF' y
 -}
