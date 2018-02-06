@@ -75,8 +75,12 @@ decode htree x = traverseHtree htree htree x []
 
 traverseHtree :: Htree -> Htree ->[Integer]-> String -> String
 traverseHtree _ (Leaf c1) [] output = reverse (c1:output)
-traverseHtree htree (Leaf c1) (x:xs) output = traverseHtree htree htree (x:xs) (c1:output)
-traverseHtree htree (Branch l r) (x:xs) output = if x == 0 then  traverseHtree htree r xs output else traverseHtree htree l xs output
+traverseHtree htree (Leaf c1) (x:xs) output = 
+                traverseHtree htree htree (x:xs) (c1:output)
+traverseHtree htree (Branch l r) (x:xs) output = 
+        if x == 0 
+            then  traverseHtree htree r xs output 
+            else traverseHtree htree l xs output
 --traverseHtree htree _ [] output = reverse output
 {-
 
@@ -102,4 +106,6 @@ let x = encode "huffman"
 let y = fst x
 let z = snd x 
 decode y z
+
+https://www.siggraph.org/education/materials/HyperGraph/video/mpeg/mpegfaq/huffman_tutorial.html
 -}
