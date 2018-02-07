@@ -57,37 +57,31 @@ addWtree ((B i0 a b):(B i3 a2 b2):xs)= sortBy (increasing') ((B (i0+i3) (B i0 a 
 
 
 encode :: String -> (Htree,[Integer])
-encode x = (htree,(test) x htree) 
+encode x = (htree,(encode') x htree) 
         where htree = (maketree) $(statistics) x
 
-test :: String -> Htree -> [Integer]
-test [] htree = []
-test (x:xs) htree = ((traverseDF) htree x []) ++ test xs htree
+encode' :: String -> Htree -> [Integer]
+encode' [] htree = []
+encode' (x:xs) htree = ((traverseDF) htree x []) ++ encode' xs htree
 
 traverseDF :: Htree -> Char-> [Integer] -> [Integer]
-traverseDF (Leaf c1) c output  = if c1==c then reverse output else []
-traverseDF (Branch l r) c output = (traverseDF l c (1:output)) 
-                ++ (traverseDF r c (0:output))
+traverseDF (Leaf c1) c output    = if c1==c then reverse output else []
+traverseDF (Branch l r) c output = (traverseDF l c (0:output)) 
+                ++ (traverseDF r c (1:output))
 
 decode :: Htree -> [Integer] -> String
 decode _ [] = []
-decode htree x = traverseHtree htree htree x []
+decode htree x = decode' htree htree x []
 
-traverseHtree :: Htree -> Htree ->[Integer]-> String -> String
-traverseHtree _ (Leaf c1) [] output = reverse (c1:output)
-traverseHtree htree (Leaf c1) (x:xs) output = 
-                traverseHtree htree htree (x:xs) (c1:output)
-traverseHtree htree (Branch l r) (x:xs) output = 
-        if x == 0 
-            then  traverseHtree htree r xs output 
-            else traverseHtree htree l xs output
---traverseHtree htree _ [] output = reverse output
+decode' :: Htree -> Htree ->[Integer]-> String -> String
+decode' _ (Leaf c1) [] output = reverse (c1:output)
+decode' htree (Leaf c1) (x:xs) output = 
+                decode' htree htree (x:xs) (c1:output)
+decode' htree (Branch l r) (x:xs) output = 
+                            if x == 1 
+                                then decode' htree r xs output 
+                                else decode' htree l xs output
 {-
-
-    | (Branch l r) && i==0 = traverseHtree r xs output
-    | (Branch l r) && i==1 = traverseHtree l xs output
-    | (Leaf c1) = c1
-    | otherwise = "illegal state..."
 
 
 let x = statistics "text"
@@ -102,7 +96,7 @@ encode "aaaa"
 traverseDF y
 
 DECODE:
-let x = encode "huffman"
+let x = encode "text"
 let y = fst x
 let z = snd x 
 decode y z
