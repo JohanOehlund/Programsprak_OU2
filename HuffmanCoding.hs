@@ -21,7 +21,7 @@ countLetters (x:xs) = (sum [1|c<-(x:xs),c==x],x)
 Deluppgift 2
 -}
 maketree :: [(Integer, Char)] -> Htree
-maketree x = (createHtree)$(createOneWtree)$(sortWtree)$(makeWtree x)  
+maketree x = (checkDistinct)$(createHtree)$(createOneWtree)$(sortWtree)$(makeWtree x)  
 
 createHtree :: Wtree -> Htree
 createHtree (L i1 w1)  = (Leaf w1)
@@ -33,7 +33,14 @@ makeWtree ((i,c):xs) = L i c : makeWtree xs
 
 sortWtree :: [Wtree] -> [Wtree]
 sortWtree [] =  []
-sortWtree (x:xs) = sortBy (increasing') (x:xs)
+sortWtree l = sortBy (increasing') l
+
+checkDistinct :: Htree -> Htree
+checkDistinct (Leaf c) = Branch (Leaf c) (Leaf c)
+checkDistinct (Branch w1 w2) = Branch w1 w2
+
+--test :: Htree -> Htree
+--test (Leaf c) = (Leaf c):(Leaf c):[]
 
 increasing' :: Wtree -> Wtree-> Ordering
 increasing' (L x _) (L y _)    = compare x y
@@ -62,7 +69,17 @@ encode x = (htree,(encode') x htree)
 
 encode' :: String -> Htree -> [Integer]
 encode' [] htree = []
+encode' (x:xs) (Branch (Leaf c1) (Leaf c2)) = 
+        if c1==c2 
+            then hardCode c1 (x:xs) 
+        else ((traverseDF) (Branch (Leaf c1) (Leaf c2)) x []) 
+                ++ encode' xs (Branch (Leaf c1) (Leaf c2))
+
 encode' (x:xs) htree = ((traverseDF) htree x []) ++ encode' xs htree
+
+hardCode :: Char -> [Char] -> [Integer]
+hardCode c str = take (sum [1|x<-str,x==c]) (repeat 0)
+
 
 traverseDF :: Htree -> Char-> [Integer] -> [Integer]
 traverseDF (Leaf c1) c output    = if c1==c then reverse output else []
@@ -71,20 +88,18 @@ traverseDF (Branch l r) c output = (traverseDF l c (0:output))
 
 decode :: Htree -> [Integer] -> String
 decode _ [] = []
-decode htree x = decode' htree htree x []
+decode htree x = decode' htree htree x
 
-decode' :: Htree -> Htree ->[Integer]-> String -> String
-decode' _ (Leaf c1) [] output = reverse (c1:output)
-decode' htree (Leaf c1) (x:xs) output = 
-                decode' htree htree (x:xs) (c1:output)
-decode' htree (Branch l r) (x:xs) output = 
-                            if x == 1 
-                                then decode' htree r xs output 
-                                else decode' htree l xs output
+decode' :: Htree -> Htree ->[Integer] -> String
+decode' _ (Leaf c1) [] = [c1]
+decode' htree (Leaf c1) (x:xs) = c1: decode' htree htree (x:xs)
+decode' htree (Branch l r) (x:xs) = if x == 1
+                                        then decode' htree r xs 
+                                        else decode' htree l xs
 {-
 
 
-let x = statistics "text"
+let x = statistics "aa"
 let y = makeWtree x
 let z = sortWtree y
 let w = createOneWtree z
@@ -96,7 +111,7 @@ encode "aaaa"
 traverseDF y
 
 DECODE:
-let x = encode "text"
+let x = encode "aaaaa fgdg"
 let y = fst x
 let z = snd x 
 decode y z
