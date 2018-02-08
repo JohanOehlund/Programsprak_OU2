@@ -1,5 +1,5 @@
 import Data.List
-
+import Data.Function
 data Htree = Leaf Char | Branch Htree Htree deriving(Show)
 data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Show)
 {-
@@ -32,8 +32,12 @@ makeWtree ((i,c):[]) = [L i c]
 makeWtree ((i,c):xs) = L i c : makeWtree xs
 
 sortWtree :: [Wtree] -> [Wtree]
-sortWtree [] =  []
-sortWtree l = sortBy (increasing') l
+--sortWtree [] =  []
+sortWtree = sortBy (compare `on` (test))
+
+test :: Wtree -> Integer
+test (L i c) = i
+test (B i w1 w2) = i 
 
 checkDistinct :: Htree -> Htree
 checkDistinct (Leaf c) = Branch (Leaf c) (Leaf c)
@@ -42,11 +46,11 @@ checkDistinct (Branch w1 w2) = Branch w1 w2
 --test :: Htree -> Htree
 --test (Leaf c) = (Leaf c):(Leaf c):[]
 
-increasing' :: Wtree -> Wtree-> Ordering
-increasing' (L x _) (L y _)    = compare x y
-increasing' (B x _ _) (L y _)  = compare x y
-increasing' (L x _) (B y _ _)  = compare x y
-increasing' (B x _ _) (B y _ _)= compare x y
+--increasing' :: Wtree -> Wtree-> Ordering
+--increasing' (L x _) (L y _)    = compare x y
+--increasing' (B x _ _) (L y _)  = compare x y
+--increasing' (L x _) (B y _ _)  = compare x y
+--increasing' (B x _ _) (B y _ _)= compare x y
 
 
 createOneWtree :: [Wtree] -> Wtree  
@@ -56,10 +60,10 @@ createOneWtree x
 
 
 addWtree :: [Wtree] -> [Wtree]
-addWtree ((L i1 c1):(L i2 c2):xs)    = sortBy (increasing') ((B (i1+i2) (L i1 c1) (L i2 c2)):xs) 
-addWtree ((B i0 a b):(L i3 c3):xs)   = sortBy (increasing') ((B (i0+i3) (B i0 a b) (L i3 c3)):xs)
-addWtree ((L i3 c3):(B i0 a b):xs)   = sortBy (increasing') ((B (i0+i3) (B i0 a b) (L i3 c3)):xs)
-addWtree ((B i0 a b):(B i3 a2 b2):xs)= sortBy (increasing') ((B (i0+i3) (B i0 a b) (B i3 a2 b2)):xs)
+addWtree ((L i1 c1):(L i2 c2):xs)    = sortWtree ((B (i1+i2) (L i1 c1) (L i2 c2)):xs) 
+addWtree ((B i0 a b):(L i3 c3):xs)   = sortWtree ((B (i0+i3) (B i0 a b) (L i3 c3)):xs)
+addWtree ((L i3 c3):(B i0 a b):xs)   = sortWtree ((B (i0+i3) (B i0 a b) (L i3 c3)):xs)
+addWtree ((B i0 a b):(B i3 a2 b2):xs)= sortWtree ((B (i0+i3) (B i0 a b) (B i3 a2 b2)):xs)
 
 
 
@@ -99,7 +103,7 @@ decode' htree (Branch l r) (x:xs) = if x == 1
 {-
 
 
-let x = statistics "aa"
+let x = statistics "huffman"
 let y = makeWtree x
 let z = sortWtree y
 let w = createOneWtree z
