@@ -2,11 +2,9 @@ import Data.List
 import Data.Function
 data Htree = Leaf Char | Branch Htree Htree deriving(Show)
 data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Show)
-{-
-Deluppgift 1:
--}
 
 {-
+Deluppgift 1:
 Function: statistics
 Comment: Counts the number of instances for each character in a string.
 -}
@@ -14,51 +12,70 @@ statistics :: String -> [(Integer, Char)]
 statistics [] = []
 statistics (x:xs) = countLetters (x:xs) : statistics [res| res<-xs, res/=x] 
 
+{-
+Function: countLetters
+Comment: Checks the first letter in the String and returns the char and the
+        number of occurrences of that letter as a tuple.
+-}
 countLetters :: String -> (Integer,Char)
 countLetters (x:xs) = (sum [1|c<-(x:xs),c==x],x)
 
 {-
-Deluppgift 2
+Deluppgift 2:
+Function: maketree
+Comment: Creates an optimal Huffmantree step by step, creating Wtrees, sorting
+        Wtrees, forming one Wtree with the list of Wtrees and finally creating 
+        the Htree. 
 -}
 maketree :: [(Integer, Char)] -> Htree
-maketree x = (checkDistinct)$(createHtree)$(createOneWtree)$(sortWtree)$(makeWtree x)  
+maketree x = (createHtree)$(createOneWtree)$(sortWtree)$(makeWtree x)  
 
+{-
+Function: createHtree
+Comment: Converts the final Wtree into a Htree.
+-}
 createHtree :: Wtree -> Htree
 createHtree (L i1 w1)  = (Leaf w1)
 createHtree (B i1 w1 w2) = (Branch ((createHtree) w1) ((createHtree) w2))
 
+{-
+Function: makeWtree
+Comment: Converts the list of letters and thier weights (ouput from function 
+        statistics) and create a list of Wtrees.
+-}
 makeWtree :: [(Integer, Char)] -> [Wtree]
 makeWtree ((i,c):[]) = [L i c] 
 makeWtree ((i,c):xs) = L i c : makeWtree xs
 
+{-
+Function: sortWtree
+Comment: Sorts the Wtree by their weight.
+-}
 sortWtree :: [Wtree] -> [Wtree]
---sortWtree [] =  []
-sortWtree = sortBy (compare `on` (test))
+sortWtree = sortBy (compare `on` (getWtreeWeight))
 
-test :: Wtree -> Integer
-test (L i c) = i
-test (B i w1 w2) = i 
+{-
+Function: getWtreeWeight
+Comment: Returns the weight of a Wtree.
+-}
+getWtreeWeight :: Wtree -> Integer
+getWtreeWeight (L i _) = i
+getWtreeWeight (B i _ _) = i 
 
-checkDistinct :: Htree -> Htree
-checkDistinct (Leaf c) = Branch (Leaf c) (Leaf c)
-checkDistinct (Branch w1 w2) = Branch w1 w2
-
---test :: Htree -> Htree
---test (Leaf c) = (Leaf c):(Leaf c):[]
-
---increasing' :: Wtree -> Wtree-> Ordering
---increasing' (L x _) (L y _)    = compare x y
---increasing' (B x _ _) (L y _)  = compare x y
---increasing' (L x _) (B y _ _)  = compare x y
---increasing' (B x _ _) (B y _ _)= compare x y
-
-
+{-
+Function: createOneWtree
+Comment: Uses recursion to construct a single Wtree from a list of Wtrees. 
+-}
 createOneWtree :: [Wtree] -> Wtree  
-createOneWtree x
-    | length x == 1 = head x
-    | otherwise = createOneWtree $(addWtree x)
+createOneWtree wtreeList
+    | length wtreeList == 1 = head wtreeList
+    | otherwise = createOneWtree $(addWtree wtreeList)
 
-
+{-
+Function: addWtree
+Comment: Creates branches (B) of leafs (L) and/or other branches (B) by
+        adding their weights and form a new branch (B).
+-}
 addWtree :: [Wtree] -> [Wtree]
 addWtree ((L i1 c1):(L i2 c2):xs)    = sortWtree ((B (i1+i2) (L i1 c1) (L i2 c2)):xs) 
 addWtree ((B i0 a b):(L i3 c3):xs)   = sortWtree ((B (i0+i3) (B i0 a b) (L i3 c3)):xs)
@@ -66,34 +83,56 @@ addWtree ((L i3 c3):(B i0 a b):xs)   = sortWtree ((B (i0+i3) (B i0 a b) (L i3 c3
 addWtree ((B i0 a b):(B i3 a2 b2):xs)= sortWtree ((B (i0+i3) (B i0 a b) (B i3 a2 b2)):xs)
 
 
-
+{-
+Deluppgift 3:
+Function: encode
+Comment: Encodes a given string using HuffmanCoding. Returns the created
+        Huffmantree and the Huffmancode for the String.
+-}
 encode :: String -> (Htree,[Integer])
 encode x = (htree,(encode') x htree) 
         where htree = (maketree) $(statistics) x
 
+{-
+Function: encode'
+Comment: Help function to encode. Handels the specialcase if the Htree only
+         got a single letter.
+-}
 encode' :: String -> Htree -> [Integer]
 encode' [] htree = []
-encode' (x:xs) (Branch (Leaf c1) (Leaf c2)) = 
-        if c1==c2 
-            then hardCode c1 (x:xs) 
-        else ((traverseDF) (Branch (Leaf c1) (Leaf c2)) x []) 
-                ++ encode' xs (Branch (Leaf c1) (Leaf c2))
-
+encode' (x:xs) (Leaf c1) = specialCase x (x:xs)
 encode' (x:xs) htree = ((traverseDF) htree x []) ++ encode' xs htree
 
-hardCode :: Char -> [Char] -> [Integer]
-hardCode c str = take (sum [1|x<-str,x==c]) (repeat 0)
+{-
+Function: specialCase
+Comment: If only one letter is in the encoding string then we encode it with 
+            zeros.
+-}
+specialCase :: Char -> [Char] -> [Integer]
+specialCase c str = take (sum [1|x<-str,x==c]) (repeat 0)
 
-
+{-
+Function: traverseDF
+Comment: Uses "Depth first search" to find the letter. 
+-}
 traverseDF :: Htree -> Char-> [Integer] -> [Integer]
 traverseDF (Leaf c1) c output    = if c1==c then reverse output else []
 traverseDF (Branch l r) c output = (traverseDF l c (0:output)) 
                 ++ (traverseDF r c (1:output))
 
+{-
+Deluppgift 4:
+Function: decode
+Comment: Decodes a Huffmancode, given the huffmancode and the Htree.
+-}
 decode :: Htree -> [Integer] -> String
 decode _ [] = []
 decode htree x = decode' htree htree x
 
+{-
+Function: decode'
+Comment: Help function for decode.
+-}
 decode' :: Htree -> Htree ->[Integer] -> String
 decode' _ (Leaf c1) [] = [c1]
 decode' htree (Leaf c1) (x:xs) = c1: decode' htree htree (x:xs)
