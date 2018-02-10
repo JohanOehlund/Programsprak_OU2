@@ -1,3 +1,12 @@
+--------------------------------------------------------------------------------
+-- | Program that encodes and decodes Huffmancodes.
+-- 
+-- Copyright  : (c) Johan Öhlund, 2018
+-- Maintainer : c15jod@cs.umu.se
+--
+-- Project for the course Programspråk VT18, Umeå universitet.
+--------------------------------------------------------------------------------
+
 import Data.List
 import Data.Function
 data Htree = Leaf Char | Branch Htree Htree deriving(Show)
@@ -35,8 +44,8 @@ Function: createHtree
 Comment: Converts the final Wtree into a Htree.
 -}
 createHtree :: Wtree -> Htree
-createHtree (L i1 w1)  = (Leaf w1)
-createHtree (B i1 w1 w2) = (Branch ((createHtree) w1) ((createHtree) w2))
+createHtree (L i1 w1)       = (Leaf w1)
+createHtree (B i1 w1 w2)    = (Branch ((createHtree) w1) ((createHtree) w2))
 
 {-
 Function: makeWtree
@@ -59,8 +68,8 @@ Function: getWtreeWeight
 Comment: Returns the weight of a Wtree.
 -}
 getWtreeWeight :: Wtree -> Integer
-getWtreeWeight (L i _) = i
-getWtreeWeight (B i _ _) = i 
+getWtreeWeight (L i _)      = i
+getWtreeWeight (B i _ _)    = i 
 
 {-
 Function: createOneWtree
@@ -69,7 +78,7 @@ Comment: Uses recursion to construct a single Wtree from a list of Wtrees.
 createOneWtree :: [Wtree] -> Wtree  
 createOneWtree wtreeList
     | length wtreeList == 1 = head wtreeList
-    | otherwise = createOneWtree $(addWtree wtreeList)
+    | otherwise             = createOneWtree $(addWtree wtreeList)
 
 {-
 Function: addWtree
@@ -77,10 +86,14 @@ Comment: Creates branches (B) of leafs (L) and/or other branches (B) by
         adding their weights and form a new branch (B).
 -}
 addWtree :: [Wtree] -> [Wtree]
-addWtree ((L i1 c1):(L i2 c2):xs)    = sortWtree ((B (i1+i2) (L i1 c1) (L i2 c2)):xs) 
-addWtree ((B i0 a b):(L i3 c3):xs)   = sortWtree ((B (i0+i3) (B i0 a b) (L i3 c3)):xs)
-addWtree ((L i3 c3):(B i0 a b):xs)   = sortWtree ((B (i0+i3) (B i0 a b) (L i3 c3)):xs)
-addWtree ((B i0 a b):(B i3 a2 b2):xs)= sortWtree ((B (i0+i3) (B i0 a b) (B i3 a2 b2)):xs)
+addWtree ((L i0 c0)   :(L i1 c1)   :xs)= 
+                            sortWtree ((B (i0+i1) (L i0 c0)    (L i1 c1))   :xs) 
+addWtree ((B i0 w1 w2):(L i1 c1)   :xs)= 
+                            sortWtree ((B (i0+i1) (B i0 w1 w2) (L i1 c1))   :xs)
+addWtree ((L i0 c0)   :(B i1 w1 w2):xs)= 
+                            sortWtree ((B (i0+i1) (L i0 c0)    (B i1 w1 w2)):xs)
+addWtree ((B i0 w1 w2):(B i1 w3 w4):xs)= 
+                            sortWtree ((B (i0+i1) (B i0 w1 w2) (B i1 w3 w4)):xs)
 
 
 {-
@@ -90,8 +103,16 @@ Comment: Encodes a given string using HuffmanCoding. Returns the created
         Huffmantree and the Huffmancode for the String.
 -}
 encode :: String -> (Htree,[Integer])
-encode x = (htree,(encode') x htree) 
-        where htree = (maketree) $(statistics) x
+encode []   = error "Can not encode empty String..."
+encode str  = convertToOuput str $(maketree) $(statistics) str
+
+
+{-
+Function: convertToOuput
+Comment: Converts to the expected output of encode.
+-}
+convertToOuput :: String -> Htree -> (Htree,[Integer])
+convertToOuput str htree  = (htree,(encode') str htree) 
 
 {-
 Function: encode'
@@ -100,16 +121,24 @@ Comment: Help function to encode. Handels the specialcase if the Htree only
 -}
 encode' :: String -> Htree -> [Integer]
 encode' [] htree = []
-encode' (x:xs) (Leaf c1) = specialCase x (x:xs)
-encode' (x:xs) htree = ((traverseDF) htree x []) ++ encode' xs htree
+encode' (x:xs) (Leaf c1)    = specialCaseEncode x (x:xs)
+encode' (x:xs) htree        = ((traverseDF) htree x []) ++ encode' xs htree
 
 {-
-Function: specialCase
+Function: specialCaseEncode
 Comment: If only one letter is in the encoding string then we encode it with 
             zeros.
 -}
-specialCase :: Char -> [Char] -> [Integer]
-specialCase c str = take (sum [1|x<-str,x==c]) (repeat 0)
+specialCaseEncode :: Char -> [Char] -> [Integer]
+specialCaseEncode c str = take (sum [1|x<-str,x==c]) (repeat 0)
+
+{-
+Function: specialCaseDecode
+Comment: If only one letter is in the decode string then we decode it with 
+            a special case.
+-}
+specialCaseDecode :: Char -> [Integer] -> [Char]
+specialCaseDecode c hcode = take (length hcode) (repeat c)
 
 {-
 Function: traverseDF
@@ -118,7 +147,7 @@ Comment: Uses "Depth first search" to find the letter.
 traverseDF :: Htree -> Char-> [Integer] -> [Integer]
 traverseDF (Leaf c1) c output    = if c1==c then reverse output else []
 traverseDF (Branch l r) c output = (traverseDF l c (0:output)) 
-                ++ (traverseDF r c (1:output))
+                                        ++ (traverseDF r c (1:output))
 
 {-
 Deluppgift 4:
@@ -126,38 +155,22 @@ Function: decode
 Comment: Decodes a Huffmancode, given the huffmancode and the Htree.
 -}
 decode :: Htree -> [Integer] -> String
-decode _ [] = []
-decode htree x = decode' htree htree x
+decode _ []             = error "Can not decode empty Huffmancode..."
+decode (Leaf c1) hcode  = specialCaseDecode c1 hcode
+decode htree x          = decode' htree htree x
 
 {-
 Function: decode'
 Comment: Help function for decode.
 -}
 decode' :: Htree -> Htree ->[Integer] -> String
-decode' _ (Leaf c1) [] = [c1]
-decode' htree (Leaf c1) (x:xs) = c1: decode' htree htree (x:xs)
-decode' htree (Branch l r) (x:xs) = if x == 1
+decode' _ (Leaf c1) []              = [c1]
+decode' htree (Leaf c1) (x:xs)      = c1: decode' htree htree (x:xs)
+decode' htree (Branch l r) (x:xs)   = if x == 1
                                         then decode' htree r xs 
                                         else decode' htree l xs
 {-
-
-
-let x = statistics "huffman"
-let y = makeWtree x
-let z = sortWtree y
-let w = createOneWtree z
-createHtree w
-
-2:
-
-encode "aaaa"
-traverseDF y
-
-DECODE:
-let x = encode "aaaaa fgdg"
-let y = fst x
-let z = snd x 
-decode y z
-
+let x = encode "0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ !?*.+"
+let y = decode (fst x) (snd x)
 https://www.siggraph.org/education/materials/HyperGraph/video/mpeg/mpegfaq/huffman_tutorial.html
 -}
