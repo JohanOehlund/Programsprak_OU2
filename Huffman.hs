@@ -170,9 +170,7 @@ decode' htree (Branch l r) (x:xs)   = if x == 1
                                         then decode' htree r xs 
                                         else decode' htree l xs
 {-
-let x = 
-encode "0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ !?*.+"
+let x = encode "0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ !?*.+"
 let y = decode (fst x) (snd x)
-https://www.siggraph.org/education/materials/HyperGraph/video/mpeg/mpegfaq
-    /huffman_tutorial.html
+https://www.siggraph.org/education/materials/HyperGraph/video/mpeg/mpegfaq/huffman_tutorial.html
 -}
