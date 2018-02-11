@@ -10,7 +10,7 @@
 import Data.List
 import Data.Function
 
-data Htree = Leaf Char | Branch Htree Htree 
+data Htree = Leaf Char | Branch Htree Htree deriving(Eq, Ord)
 data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq, Ord)
 
 
