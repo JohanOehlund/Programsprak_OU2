@@ -9,8 +9,55 @@
 
 import Data.List
 import Data.Function
-data Htree = Leaf Char | Branch Htree Htree deriving(Show)
-data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Show)
+
+data Htree = Leaf Char | Branch Htree Htree 
+data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq, Ord)
+
+
+--Show instance for Wtree.
+--If an expression is surrounded by "{...}" then it belongs to a B. 
+instance Show Wtree where
+    show wtree = "\n"++showWtree wtree 0 ++ "\n"
+
+--Show instance for Htree.
+--If an expression is surrounded by "{...}" then it belongs to a Branch.
+instance Show Htree where
+    show htree = "\n"++showHtree htree 0 ++ "\n"
+ 
+
+{-
+Function: padding
+Comment: Used for padding for Show instances of Htree and Wtree.
+-}
+padding :: Integer -> String
+padding 0 = ""
+padding n = "." ++ padding(n-1)
+
+{-
+Function: showWtree
+Comment: Displays the Wtree nicely.
+-}
+showWtree :: Wtree -> Integer -> String
+showWtree (L i c) n = (padding n) ++ "L "++show i ++ " " ++show c
+showWtree (B i l r) n = let showl = showWtree l (n+4) in
+                           let showr = showWtree r (n+4) in
+                           let showc = (padding n) ++ "B "++show i++"{" in
+                           showc ++ "\n" ++ showl ++ "\n" ++ showr ++ "\n" 
+                            ++ (padding n) ++ "}"
+
+{-
+Function: showHtree
+Comment: Displays the Htree nicely.
+-}
+showHtree :: Htree -> Integer -> String
+showHtree (Leaf c) n = (padding n) ++ "Leaf "++show c
+showHtree (Branch l r) n = let showl = showHtree l (n+4) in
+                           let showr = showHtree r (n+4) in
+                           let showc = (padding n) ++ "Branch{" in
+                           showc ++ "\n" ++ showl ++ "\n" ++ showr ++ "\n" 
+                            ++ (padding n) ++ "}"
+
+
 
 {-
 Deluppgift 1:
