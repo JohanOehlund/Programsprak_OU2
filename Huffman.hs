@@ -17,7 +17,8 @@ data Htree = Leaf Char | Branch Htree Htree deriving(Eq, Ord)
 data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq, Ord)
 
 {-
-Show instances for Htree and Wtree, imported from Data.Tree
+Instances: Show instances for Htree and Wtree, function drawTree is imported 
+            from Data.Tree to print the trees nicely.
 Comment: Prints Wtree and Htree nicely.
 -}
 instance Show Wtree where
@@ -42,7 +43,8 @@ Comment: Converts a Wtree to a Tree used for Show instance.
 -}
 wtreeToTree :: Wtree -> Tree String
 wtreeToTree (L i c) = Node [toChar i,' ',c] []
-wtreeToTree (B i h1 h2) = Node [toChar i,' ', 'B','*'] [wtreeToTree h1,wtreeToTree h2]
+wtreeToTree (B i h1 h2) = Node [toChar i,' ', 'B','*'] 
+                            [wtreeToTree h1,wtreeToTree h2]
 
 {-
 Function: toChar
@@ -194,24 +196,3 @@ Comment: If only one letter is in the decode string then we decode it with
 -}
 specialCaseDecode :: Char -> [Integer] -> [Char]
 specialCaseDecode c hcode = take (length hcode) (repeat c)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{-
-let x = encode "0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ !?*.+"
-let y = decode (fst x) (snd x)
-https://www.siggraph.org/education/materials/HyperGraph/video/mpeg/mpegfaq/huffman_tutorial.html
--}
