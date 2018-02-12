@@ -6,6 +6,7 @@
 --
 -- Project for the course Programspråk VT18, Umeå universitet.
 --------------------------------------------------------------------------------
+module Huffman (Htree,Wtree,encode,decode) where
 
 import Data.List
 import Data.Function
@@ -150,7 +151,7 @@ encode' (x:xs) htree        = ((traverseDF) htree x []) ++ encode' xs htree
 
 {-
 Function: traverseDF
-Comment: Uses "Depth first search" to find the letter. 
+Comment: Uses "Depth first search" to find the Huffman code of a letter. 
 -}
 traverseDF :: Htree -> Char-> [Integer] -> [Integer]
 traverseDF (Leaf c1) c output    = if c1==c then reverse output else []
