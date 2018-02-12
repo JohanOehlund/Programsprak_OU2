@@ -9,55 +9,46 @@
 
 import Data.List
 import Data.Function
+import Data.Tree
+import Data.Char
 
 data Htree = Leaf Char | Branch Htree Htree deriving(Eq, Ord)
 data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq, Ord)
 
-
---Show instance for Wtree.
---If an expression is surrounded by "{...}" then it belongs to a B. 
+{-
+Show instances for Htree and Wtree, imported from Data.Tree
+Comment: Prints Wtree and Htree nicely.
+-}
 instance Show Wtree where
-    show wtree = "\n"++showWtree wtree 0 ++ "\n"
+  show (L i c) = show i ++ " " ++ show c 
+  show (B i h1 h2) = "\n"++(drawTree $ wtreeToTree (B i h1 h2))
 
---Show instance for Htree.
---If an expression is surrounded by "{...}" then it belongs to a Branch.
 instance Show Htree where
-    show htree = "\n"++showHtree htree 0 ++ "\n"
- 
+  show (Leaf c) = show c 
+  show (Branch h1 h2) = "\n"++(drawTree $ htreeToTree (Branch h1 h2))
 
 {-
-Function: padding
-Comment: Used for padding for Show instances of Htree and Wtree.
+Function: htreeToTree
+Comment: Converts a Htree to a Tree used for Show instance.
 -}
-padding :: Integer -> String
-padding 0 = ""
-padding n = "." ++ padding(n-1)
+htreeToTree :: Htree -> Tree String
+htreeToTree (Leaf c) = Node [c] []
+htreeToTree (Branch h1 h2) = Node ['B','*'] [htreeToTree h1 , htreeToTree h2]
 
 {-
-Function: showWtree
-Comment: Displays the Wtree nicely.
+Function: wtreeToTree
+Comment: Converts a Wtree to a Tree used for Show instance.
 -}
-showWtree :: Wtree -> Integer -> String
-showWtree (L i c) n = (padding n) ++ "L "++show i ++ " " ++show c
-showWtree (B i l r) n = let showl = showWtree l (n+4) in
-                           let showr = showWtree r (n+4) in
-                           let showc = (padding n) ++ "B "++show i++"{" in
-                           showc ++ "\n" ++ showl ++ "\n" ++ showr ++ "\n" 
-                            ++ (padding n) ++ "}"
+wtreeToTree :: Wtree -> Tree String
+wtreeToTree (L i c) = Node [toChar i,' ',c] []
+wtreeToTree (B i h1 h2) = Node [toChar i,' ', 'B','*'] [wtreeToTree h1,wtreeToTree h2]
 
 {-
-Function: showHtree
-Comment: Displays the Htree nicely.
+Function: toChar
+Comment: Converts an Integer to a Char.
 -}
-showHtree :: Htree -> Integer -> String
-showHtree (Leaf c) n = (padding n) ++ "Leaf "++show c
-showHtree (Branch l r) n = let showl = showHtree l (n+4) in
-                           let showr = showHtree r (n+4) in
-                           let showc = (padding n) ++ "Branch{" in
-                           showc ++ "\n" ++ showl ++ "\n" ++ showr ++ "\n" 
-                            ++ (padding n) ++ "}"
-
-
+toChar :: Integer -> Char
+toChar i = ((intToDigit)((fromIntegral) i))
 
 {-
 Deluppgift 1:
@@ -84,7 +75,7 @@ Comment: Creates an optimal Huffmantree step by step, creating Wtrees, sorting
         the Htree. 
 -}
 maketree :: [(Integer, Char)] -> Htree
-maketree x = (createHtree)$(createOneWtree)$(sortWtree)$(makeWtree x)  
+maketree x = (createHtree)$(addWtree)$(sort)$(makeWtree x)  
 
 {-
 Function: createHtree
@@ -104,13 +95,6 @@ makeWtree ((i,c):[]) = [L i c]
 makeWtree ((i,c):xs) = L i c : makeWtree xs
 
 {-
-Function: sortWtree
-Comment: Sorts the Wtree by their weight.
--}
-sortWtree :: [Wtree] -> [Wtree]
-sortWtree = sortBy (compare `on` (getWtreeWeight))
-
-{-
 Function: getWtreeWeight
 Comment: Returns the weight of a Wtree.
 -}
@@ -119,29 +103,22 @@ getWtreeWeight (L i _)      = i
 getWtreeWeight (B i _ _)    = i 
 
 {-
-Function: createOneWtree
-Comment: Uses recursion to construct a single Wtree from a list of Wtrees. 
--}
-createOneWtree :: [Wtree] -> Wtree  
-createOneWtree wtreeList
-    | length wtreeList == 1 = head wtreeList
-    | otherwise             = createOneWtree $(addWtree wtreeList)
-
-{-
 Function: addWtree
 Comment: Creates branches (B) of leafs (L) and/or other branches (B) by
         adding their weights and form a new branch (B).
 -}
-addWtree :: [Wtree] -> [Wtree]
-addWtree ((L i0 c0)   :(L i1 c1)   :xs)= 
-                            sortWtree ((B (i0+i1) (L i0 c0)    (L i1 c1))   :xs) 
-addWtree ((B i0 w1 w2):(L i1 c1)   :xs)= 
-                            sortWtree ((B (i0+i1) (B i0 w1 w2) (L i1 c1))   :xs)
-addWtree ((L i0 c0)   :(B i1 w1 w2):xs)= 
-                            sortWtree ((B (i0+i1) (L i0 c0)    (B i1 w1 w2)):xs)
-addWtree ((B i0 w1 w2):(B i1 w3 w4):xs)= 
-                            sortWtree ((B (i0+i1) (B i0 w1 w2) (B i1 w3 w4)):xs)
+addWtree :: [Wtree] -> Wtree
+addWtree (w1:[]) = w1
+addWtree (w1:w2:xs) = (addWtree) $(sort)(((addWtree')
+                        (getWtreeWeight w1)(getWtreeWeight w2) w1 w2):xs)
 
+{-
+Function: addWtree'
+Comment: Help function for addWtree that creates new branch (B) by 
+        adding the subtrees weights to the new branch (B).
+-}
+addWtree' :: Integer -> Integer -> Wtree -> Wtree -> Wtree
+addWtree' i1 i2 w1 w2= (B (i1+i2) w1 w2)
 
 {-
 Deluppgift 3:
@@ -151,7 +128,7 @@ Comment: Encodes a given string using HuffmanCoding. Returns the created
 -}
 encode :: String -> (Htree,[Integer])
 encode []   = error "Can not encode empty String..."
-encode str  = convertToOuput str $(maketree) $(statistics) str
+encode str  = convertToOuput str ((maketree) $(statistics) str)
 
 
 {-
@@ -170,22 +147,6 @@ encode' :: String -> Htree -> [Integer]
 encode' [] htree = []
 encode' (x:xs) (Leaf c1)    = specialCaseEncode x (x:xs)
 encode' (x:xs) htree        = ((traverseDF) htree x []) ++ encode' xs htree
-
-{-
-Function: specialCaseEncode
-Comment: If only one letter is in the encoding string then we encode it with 
-            zeros.
--}
-specialCaseEncode :: Char -> [Char] -> [Integer]
-specialCaseEncode c str = take (sum [1|x<-str,x==c]) (repeat 0)
-
-{-
-Function: specialCaseDecode
-Comment: If only one letter is in the decode string then we decode it with 
-            a special case.
--}
-specialCaseDecode :: Char -> [Integer] -> [Char]
-specialCaseDecode c hcode = take (length hcode) (repeat c)
 
 {-
 Function: traverseDF
@@ -216,6 +177,38 @@ decode' htree (Leaf c1) (x:xs)      = c1: decode' htree htree (x:xs)
 decode' htree (Branch l r) (x:xs)   = if x == 1
                                         then decode' htree r xs 
                                         else decode' htree l xs
+
+{-
+Function: specialCaseEncode
+Comment: If only one letter is in the encoding string then we encode it with 
+            zeros.
+-}
+specialCaseEncode :: Char -> [Char] -> [Integer]
+specialCaseEncode c str = take (sum [1|x<-str,x==c]) (repeat 0)
+
+{-
+Function: specialCaseDecode
+Comment: If only one letter is in the decode string then we decode it with 
+            a special case.
+-}
+specialCaseDecode :: Char -> [Integer] -> [Char]
+specialCaseDecode c hcode = take (length hcode) (repeat c)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 {-
 let x = encode "0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ !?*.+"
 let y = decode (fst x) (snd x)
