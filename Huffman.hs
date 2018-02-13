@@ -175,6 +175,7 @@ Function: decode'
 Comment: Help function for decode.
 -}
 decode' :: Htree -> Htree ->[Integer] -> String
+decode' _ (Branch _ _) []           = error "Huffmancode stopped on a Branch."
 decode' _ (Leaf c1) []              = [c1]
 decode' htree (Leaf c1) (x:xs)      = c1: decode' htree htree (x:xs)
 decode' htree (Branch l r) (x:xs)   = if x == 1
