@@ -6,7 +6,7 @@
 --
 -- Project for the course Programspråk VT18, Umeå universitet.
 --------------------------------------------------------------------------------
-module Huffman (Htree,Wtree,encode,decode) where
+module Huffman (Htree,encode,decode) where
 
 import Data.List
 import Data.Function
@@ -148,7 +148,7 @@ Comment: Help function to encode. Handels the specialcase if the Htree only
 -}
 encode' :: String -> Htree -> [Integer]
 encode' [] htree = []
-encode' (x:xs) (Leaf c1)    = specialCaseEncode x (x:xs)
+encode' (x:xs) (Leaf c)    = take (sum [1|a<-(x:xs),a==c]) (repeat 0)
 encode' (x:xs) htree        = ((traverseDF) htree x []) ++ encode' xs htree
 
 {-
@@ -167,7 +167,7 @@ Comment: Decodes a Huffmancode, given the huffmancode and the Htree.
 -}
 decode :: Htree -> [Integer] -> String
 decode _ []             = error "Can not decode empty Huffmancode..."
-decode (Leaf c1) hcode  = specialCaseDecode c1 hcode
+decode (Leaf c1) hcode  = take (length hcode) (repeat c1)
 decode htree x          = decode' htree htree x
 
 {-
@@ -180,19 +180,3 @@ decode' htree (Leaf c1) (x:xs)      = c1: decode' htree htree (x:xs)
 decode' htree (Branch l r) (x:xs)   = if x == 1
                                         then decode' htree r xs 
                                         else decode' htree l xs
-
-{-
-Function: specialCaseEncode
-Comment: If only one letter is in the encoding string then we encode it with 
-            zeros.
--}
-specialCaseEncode :: Char -> [Char] -> [Integer]
-specialCaseEncode c str = take (sum [1|x<-str,x==c]) (repeat 0)
-
-{-
-Function: specialCaseDecode
-Comment: If only one letter is in the decode string then we decode it with 
-            a special case.
--}
-specialCaseDecode :: Char -> [Integer] -> [Char]
-specialCaseDecode c hcode = take (length hcode) (repeat c)
