@@ -13,8 +13,8 @@ import Data.Function
 import Data.Tree
 import Data.Char
 
-data Htree = Leaf Char | Branch Htree Htree deriving(Eq, Ord)
-data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq, Ord)
+data Htree = Leaf Char | Branch Htree Htree deriving(Eq, Ord,Read)
+data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq, Ord,Read)
 
 {-
 Instances: Show instances for Htree and Wtree, function drawTree is imported 
@@ -34,24 +34,17 @@ Function: htreeToTree
 Comment: Converts a Htree to a Tree used for Show instance.
 -}
 htreeToTree :: Htree -> Tree String
-htreeToTree (Leaf c) = Node [c] []
-htreeToTree (Branch h1 h2) = Node ['B','*'] [htreeToTree h1 , htreeToTree h2]
+htreeToTree (Leaf c) = Node (show c) []
+htreeToTree (Branch h1 h2) = Node "B*" [htreeToTree h1 , htreeToTree h2]
 
 {-
 Function: wtreeToTree
 Comment: Converts a Wtree to a Tree used for Show instance.
 -}
 wtreeToTree :: Wtree -> Tree String
-wtreeToTree (L i c) = Node [toChar i,' ',c] []
-wtreeToTree (B i h1 h2) = Node [toChar i,' ', 'B','*'] 
+wtreeToTree (L i c) = Node ((show i)++" "++(show c)) []
+wtreeToTree (B i h1 h2) = Node ((show i)++"B*") 
                             [wtreeToTree h1,wtreeToTree h2]
-
-{-
-Function: toChar
-Comment: Converts an Integer to a Char.
--}
-toChar :: Integer -> Char
-toChar i = ((intToDigit)((fromIntegral) i))
 
 {-
 Deluppgift 1:
@@ -78,7 +71,7 @@ Comment: Creates an optimal Huffmantree step by step, creating Wtrees, sorting
         the Htree. 
 -}
 maketree :: [(Integer, Char)] -> Htree
-maketree x = (createHtree)$(addWtree)$(sort)$(makeWtree x)  
+maketree x = (createHtree)$(addWtree)$(sort)$(makeWtreeList x)  
 
 {-
 Function: createHtree
@@ -89,13 +82,13 @@ createHtree (L i1 w1)       = (Leaf w1)
 createHtree (B i1 w1 w2)    = (Branch ((createHtree) w1) ((createHtree) w2))
 
 {-
-Function: makeWtree
+Function: makeWtreeList
 Comment: Converts the list of letters and thier weights (ouput from function 
         statistics) and create a list of Wtrees.
 -}
-makeWtree :: [(Integer, Char)] -> [Wtree]
-makeWtree ((i,c):[]) = [L i c] 
-makeWtree ((i,c):xs) = L i c : makeWtree xs
+makeWtreeList :: [(Integer, Char)] -> [Wtree]
+makeWtreeList ((i,c):[]) = [L i c] 
+makeWtreeList ((i,c):xs) = L i c : makeWtreeList xs
 
 {-
 Function: getWtreeWeight
