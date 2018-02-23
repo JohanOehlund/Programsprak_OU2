@@ -13,14 +13,22 @@ import Data.Function
 import Data.Tree
 import Data.Char
 
-data Htree = Leaf Char | Branch Htree Htree deriving(Eq, Ord,Read)
-data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq, Ord,Read)
+data Htree = Leaf Char | Branch Htree Htree deriving(Eq,Read)
+data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq,Read)
 
 {-
 Instances: Show instances for Htree and Wtree, function drawTree is imported 
             from Data.Tree to print the trees nicely.
 Comment: Prints Wtree and Htree nicely.
 -}
+
+
+instance Ord Wtree where
+  compare (L i1 c1)    (L i2 c2)    = (compare) i1 i2
+  compare (L i1 c1)    (B i2 w1 w2) = (compare) i1 i2 
+  compare (B i1 w1 w2) (L i2 c2)    = (compare) i1 i2 
+  compare (B i1 w1 w2) (B i2 w3 w4) = (compare) i1 i2  
+
 instance Show Wtree where
   show (L i c) = show i ++ " " ++ show c 
   show (B i h1 h2) = "\n"++(drawTree $ wtreeToTree (B i h1 h2))
@@ -105,16 +113,15 @@ Comment: Creates branches (B) of leafs (L) and/or other branches (B) by
 -}
 addWtree :: [Wtree] -> Wtree
 addWtree (w1:[]) = w1
-addWtree (w1:w2:xs) = (addWtree) $(sort)(((addWtree')
-                        (getWtreeWeight w1)(getWtreeWeight w2) w1 w2):xs)
+addWtree (w1:w2:xs) = (addWtree) $(sort)(((addWtree') w1 w2):xs)
 
 {-
 Function: addWtree'
 Comment: Help function for addWtree that creates new branch (B) by 
         adding the subtrees weights to the new branch (B).
 -}
-addWtree' :: Integer -> Integer -> Wtree -> Wtree -> Wtree
-addWtree' i1 i2 w1 w2= (B (i1+i2) w1 w2)
+addWtree' :: Wtree -> Wtree -> Wtree
+addWtree' w1 w2= (B ((getWtreeWeight w1)+(getWtreeWeight w2)) w1 w2)
 
 {-
 Deluppgift 3:
