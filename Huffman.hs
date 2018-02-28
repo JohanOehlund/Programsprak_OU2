@@ -17,18 +17,20 @@ data Htree = Leaf Char | Branch Htree Htree deriving(Eq,Read)
 data Wtree = L Integer Char | B Integer Wtree Wtree deriving(Eq,Read)
 
 {-
-Instances: Show instances for Htree and Wtree, function drawTree is imported 
-            from Data.Tree to print the trees nicely.
-Comment: Prints Wtree and Htree nicely.
+Instances: Ord instance for Wtree.
+Comment: Orders the Wtree.
 -}
-
-
 instance Ord Wtree where
   compare (L i1 c1)    (L i2 c2)    = (compare) i1 i2
   compare (L i1 c1)    (B i2 w1 w2) = (compare) i1 i2 
   compare (B i1 w1 w2) (L i2 c2)    = (compare) i1 i2 
   compare (B i1 w1 w2) (B i2 w3 w4) = (compare) i1 i2  
 
+{-
+Instances: Show instances for Htree and Wtree, function drawTree is imported 
+            from Data.Tree to print the trees nicely.
+Comment: Prints Wtree and Htree nicely.
+-}
 instance Show Wtree where
   show (L i c) = show i ++ " " ++ show c 
   show (B i h1 h2) = "\n"++(drawTree $ wtreeToTree (B i h1 h2))
